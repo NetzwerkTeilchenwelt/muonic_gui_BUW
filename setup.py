@@ -22,7 +22,7 @@ setup(
 
     version='1.0.0',
 
-    description='A muonic consumer for Qt4',
+    description='A muonic consumer for Qt5',
     long_description=long_description,
 
     url='https://github.com/phyz777/muonic_gui_BUW',
@@ -47,7 +47,7 @@ setup(
         'Programming Language :: Python :: 3.8',
     ],
 
-    keywords='PyQt4 Qt GUI muonic muon skyview',
+    keywords='PyQt5 Qt GUI muonic muon skyview',
 
     packages=['muonic_gui', 'muonic_gui.analysis', 'muonic_gui.gui'],
 

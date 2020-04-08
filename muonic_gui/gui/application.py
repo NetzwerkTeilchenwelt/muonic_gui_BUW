@@ -203,7 +203,7 @@ class Application(AbstractMuonicConsumer, QtWidgets.QMainWindow):
                 "/usr/share/icons/gnome/24x24/actions/exit.png"), 'Exit', self)
         exit_action.setShortcut('Ctrl+Q')
         exit_action.setStatusTip('Exit application')
-        exit_action.triggered.connect(self.close_application)
+        #exit_action.triggered.connect(self.close_application)
 
         file_menu.addAction(exit_action)
 
