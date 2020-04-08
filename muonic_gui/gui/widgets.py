@@ -7,16 +7,16 @@ import os
 import time
 
 try:
-    from matplotlib.backends.backend_qt4agg \
+    from matplotlib.backends.backend_qt5agg \
         import NavigationToolbar2QTAgg as NavigationToolbar
 except ImportError:
-    from matplotlib.backends.backend_qt4agg \
+    from matplotlib.backends.backend_qt5agg \
         import NavigationToolbar2QT as NavigationToolbar
 
 import numpy as np
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 from muonic.daq.provider import BaseDAQProvider
 from muonic.lib.analyzers import RateAnalyzer, PulseAnalyzer, DecayAnalyzer, VelocityAnalyzer
@@ -31,7 +31,7 @@ from muonic_gui.analysis import VelocityTrigger, DecayTriggerThorough
 # from muonic.util import rename_muonic_file, get_hours_from_duration
 # from muonic.util import get_setting, WrappedFile
 
-class BaseWidget(QtGui.QWidget):
+class BaseWidget(QtWidgets.QWidget):
     """
     Base widget class
 
@@ -41,7 +41,7 @@ class BaseWidget(QtGui.QWidget):
     """
 
     def __init__(self, logger, opts=None, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
         self.logger = logger
         self.parent = parent
         self._active = False
@@ -53,7 +53,7 @@ class BaseWidget(QtGui.QWidget):
         :param args:
         :returns: None
         """
-        QtGui.QWidget.update(*args)
+        QtWidgets.QWidget.update(*args)
 
     def calculate(self, *args):
         """
@@ -164,7 +164,7 @@ class RateWidget(BaseWidget):
         # 4:    trigger
         self.previous_scalars = self.new_scalar_buffer()
         self.scalar_buffer = self.new_scalar_buffer()
-        
+
         # maximum and minimum seen rate across channels and trigger
         self.max_rate = 0
         self.min_rate = 0
@@ -185,13 +185,13 @@ class RateWidget(BaseWidget):
         # initialize plot canvas
         self.scalars_monitor = ScalarsCanvas(self, logger)
 
-        self.table = QtGui.QTableWidget(5, 2, self)
+        self.table = QtWidgets.QTableWidget(5, 2, self)
         self.table.setEnabled(False)
         self.table.setColumnWidth(0, 85)
         self.table.setColumnWidth(1, 60)
         self.table.setHorizontalHeaderLabels(["rate [1/s]", "counts"])
-        self.table.setVerticalHeaderLabels(["channel 0", "channel 1", 
-                                            "channel 2", "channel 3", 
+        self.table.setVerticalHeaderLabels(["channel 0", "channel 1",
+                                            "channel 2", "channel 3",
                                             "trigger"])
         self.table.horizontalHeader().setStretchLastSection(True)
 
@@ -204,10 +204,10 @@ class RateWidget(BaseWidget):
 
         # add table widget items for channel and trigger values
         for i in range(self.SCALAR_BUF_SIZE):
-            self.rate_fields[i] = QtGui.QTableWidgetItem('--')
+            self.rate_fields[i] = QtWidgets.QTableWidgetItem('--')
             self.rate_fields[i].setFlags(QtCore.Qt.ItemIsSelectable |
                                          QtCore.Qt.ItemIsEnabled)
-            self.scalar_fields[i] = QtGui.QTableWidgetItem('--')
+            self.scalar_fields[i] = QtWidgets.QTableWidgetItem('--')
             self.scalar_fields[i].setFlags(QtCore.Qt.ItemIsSelectable |
                                            QtCore.Qt.ItemIsEnabled)
             self.table.setItem(i, 0, self.rate_fields[i])
@@ -218,19 +218,17 @@ class RateWidget(BaseWidget):
 
         # add widgets for info fields
         for key in ["start_date", "daq_time", "max_rate"]:
-            self.info_fields[key] = QtGui.QLineEdit(self)
+            self.info_fields[key] = QtWidgets.QLineEdit(self)
             self.info_fields[key].setReadOnly(True)
             self.info_fields[key].setDisabled(True)
 
         # initialize start and stop button
-        self.start_button = QtGui.QPushButton('Start run')
-        self.stop_button = QtGui.QPushButton('Stop run')
+        self.start_button = QtWidgets.QPushButton('Start run')
+        self.stop_button = QtWidgets.QPushButton('Stop run')
 
-        QtCore.QObject.connect(self.start_button, QtCore.SIGNAL("clicked()"),
-                               self.start)
+        self.start_button.clicked.connect(self.start)
 
-        QtCore.QObject.connect(self.stop_button, QtCore.SIGNAL("clicked()"),
-                               self.stop)
+        self.stop_button.clicked.connect(self.stop)
         self.stop_button.setEnabled(False)
 
         self.setup_layout()
@@ -252,28 +250,28 @@ class RateWidget(BaseWidget):
         # create navigation toolbar
         navigation_toolbar = NavigationToolbar(self.scalars_monitor, self)
 
-        layout = QtGui.QGridLayout(self)
+        layout = QtWidgets.QGridLayout(self)
 
         # plot layout
-        plot_box = QtGui.QGroupBox("")
-        plot_layout = QtGui.QGridLayout(plot_box)
+        plot_box = QtWidgets.QGroupBox("")
+        plot_layout = QtWidgets.QGridLayout(plot_box)
         plot_layout.addWidget(self.scalars_monitor, 0, 0, 1, 2)
 
         # value table layout
-        value_box = QtGui.QGroupBox("")
+        value_box = QtWidgets.QGroupBox("")
         value_box.setMaximumWidth(500)
-        value_layout = QtGui.QGridLayout(value_box)
+        value_layout = QtWidgets.QGridLayout(value_box)
         value_layout.addWidget(self.table, 0, 0, 1, 2)
-        value_layout.addWidget(QtGui.QLabel('started:'), 1, 0)
+        value_layout.addWidget(QtWidgets.QLabel('started:'), 1, 0)
         value_layout.addWidget(self.info_fields['start_date'], 1, 1, 1, 1)
-        value_layout.addWidget(QtGui.QLabel('daq time:'), 2, 0)
+        value_layout.addWidget(QtWidgets.QLabel('daq time:'), 2, 0)
         value_layout.addWidget(self.info_fields['daq_time'], 2, 1)
-        value_layout.addWidget(QtGui.QLabel('max rate:'), 3, 0)
+        value_layout.addWidget(QtWidgets.QLabel('max rate:'), 3, 0)
         value_layout.addWidget(self.info_fields['max_rate'], 3, 1)
 
         # bottom line layout
-        bottom_line_box = QtGui.QGroupBox("")
-        bottom_line_layout = QtGui.QGridLayout(bottom_line_box)
+        bottom_line_box = QtWidgets.QGroupBox("")
+        bottom_line_layout = QtWidgets.QGridLayout(bottom_line_box)
         bottom_line_layout.addWidget(navigation_toolbar, 4, 0, 1, 3)
         bottom_line_layout.addWidget(self.start_button, 4, 3)
         bottom_line_layout.addWidget(self.stop_button, 4, 4)
@@ -608,21 +606,20 @@ class PulseAnalyzerWidget(BaseWidget):
         # self.pulse_extractor = pulse_extractor
 
         # setup layout
-        layout = QtGui.QGridLayout(self)
+        layout = QtWidgets.QGridLayout(self)
 
-        self.checkbox = QtGui.QCheckBox(self)
+        self.checkbox = QtWidgets.QCheckBox(self)
         self.checkbox.setText("Show Oscilloscope and Pulse Width Distribution")
         self.checkbox.setToolTip("The oscilloscope will show the " +
                                  "last triggered pulses in the " +
                                  "selected time window")
-        QtCore.QObject.connect(self.checkbox, QtCore.SIGNAL("clicked()"),
-                               self.on_checkbox_clicked)
+        self.checkbox.clicked.connect(self.on_checkbox_clicked)
 
         self.pulse_width_canvases = []
         self.pulse_width_toolbars = []
 
         for i in range(4):
-            self.pulse_width_canvases.append((PulseWidthCanvas(self, logger, 
+            self.pulse_width_canvases.append((PulseWidthCanvas(self, logger,
                                                     title="Pulse Widths Ch %d"%i)))
             self.pulse_width_toolbars.append(NavigationToolbar(self.pulse_width_canvases[-1], self))
 
@@ -687,7 +684,7 @@ class PulseAnalyzerWidget(BaseWidget):
     #
     #     self.pulse_widths = {i : [] for i in range(4)}
     #     self.pulse_timestamps = {i : [] for i in range(4)}
-        
+
 
     def on_checkbox_clicked(self):
         """
@@ -797,47 +794,47 @@ class StatusWidget(BaseWidget):
 
         # setup daq widgets
         for i in range(4):
-            self.daq_widgets['thresholds'].append(QtGui.QLineEdit(self))
+            self.daq_widgets['thresholds'].append(QtWidgets.QLineEdit(self))
             self.daq_widgets['thresholds'][i].setReadOnly(True)
             self.daq_widgets['thresholds'][i].setText(
                     self.daq_stats['thresholds'][i])
             self.daq_widgets['thresholds'][i].setDisabled(True)
 
-            self.daq_widgets['active_channels'].append(QtGui.QLineEdit(self))
+            self.daq_widgets['active_channels'].append(QtWidgets.QLineEdit(self))
             self.daq_widgets['active_channels'][i].setText('Channel %d' % i)
             self.daq_widgets['active_channels'][i].setReadOnly(True)
             self.daq_widgets['active_channels'][i].setEnabled(False)
 
         for key in ['coincidences', 'coincidence_time', 'veto', 'decay_veto']:
-            self.daq_widgets[key] = QtGui.QLineEdit(self)
+            self.daq_widgets[key] = QtWidgets.QLineEdit(self)
             self.daq_widgets[key].setReadOnly(True)
             self.daq_widgets[key].setDisabled(True)
             self.daq_widgets[key].setText(self.daq_stats[key])
 
         # setup muonic widgets
         for key in ['open_files', 'start_params']:
-            self.muonic_widgets[key] = QtGui.QPlainTextEdit(self)
+            self.muonic_widgets[key] = QtWidgets.QPlainTextEdit(self)
             self.muonic_widgets[key].setReadOnly(True)
             self.muonic_widgets[key].setDisabled(True)
             self.muonic_widgets[key].setPlainText(self.muonic_stats[key])
 
         for key in ['measurements', 'refresh_time']:
-            self.muonic_widgets[key] = QtGui.QLineEdit(self)
+            self.muonic_widgets[key] = QtWidgets.QLineEdit(self)
             self.muonic_widgets[key].setReadOnly(True)
             self.muonic_widgets[key].setDisabled(True)
             self.muonic_widgets[key].setText(self.muonic_stats[key])
 
-        layout = QtGui.QGridLayout(self)
+        layout = QtWidgets.QGridLayout(self)
 
         # add daq status widgets
-        layout.addWidget(QtGui.QLabel("Status of the DAQ card:"), 0, 0)
-        layout.addWidget(QtGui.QLabel("Active channels:"), 1, 0)
-        layout.addWidget(QtGui.QLabel("Threshold:"), 2, 0)
-        layout.addWidget(QtGui.QLabel("Trigger condition:"), 3, 0)
-        layout.addWidget(QtGui.QLabel("Time window for trigger condition:"),
+        layout.addWidget(QtWidgets.QLabel("Status of the DAQ card:"), 0, 0)
+        layout.addWidget(QtWidgets.QLabel("Active channels:"), 1, 0)
+        layout.addWidget(QtWidgets.QLabel("Threshold:"), 2, 0)
+        layout.addWidget(QtWidgets.QLabel("Trigger condition:"), 3, 0)
+        layout.addWidget(QtWidgets.QLabel("Time window for trigger condition:"),
                          3, 3)
-        layout.addWidget(QtGui.QLabel("Veto:"), 4, 0)
-        layout.addWidget(QtGui.QLabel("Muon Decay Veto:"), 5, 0)
+        layout.addWidget(QtWidgets.QLabel("Veto:"), 4, 0)
+        layout.addWidget(QtWidgets.QLabel("Muon Decay Veto:"), 5, 0)
 
         for i in range(4):
             layout.addWidget(self.daq_widgets['active_channels'][i], 1, i + 1)
@@ -849,22 +846,20 @@ class StatusWidget(BaseWidget):
         layout.addWidget(self.daq_widgets['decay_veto'], 5, 1, 1, 4)
 
         # add muonic status widgets
-        layout.addWidget(QtGui.QLabel(self), 6, 0)
-        layout.addWidget(QtGui.QLabel("Status of Muonic:"), 7, 0)
-        layout.addWidget(QtGui.QLabel("Active measurements:"), 8, 0)
-        layout.addWidget(QtGui.QLabel("Measurement intervals:"), 8, 3)
-        layout.addWidget(QtGui.QLabel("Start parameter:"), 9, 0)
-        layout.addWidget(QtGui.QLabel("Currently opened files:"), 11, 0)
+        layout.addWidget(QtWidgets.QLabel(self), 6, 0)
+        layout.addWidget(QtWidgets.QLabel("Status of Muonic:"), 7, 0)
+        layout.addWidget(QtWidgets.QLabel("Active measurements:"), 8, 0)
+        layout.addWidget(QtWidgets.QLabel("Measurement intervals:"), 8, 3)
+        layout.addWidget(QtWidgets.QLabel("Start parameter:"), 9, 0)
+        layout.addWidget(QtWidgets.QLabel("Currently opened files:"), 11, 0)
         layout.addWidget(self.muonic_widgets['measurements'], 8, 1, 1, 2)
         layout.addWidget(self.muonic_widgets['refresh_time'], 8, 4)
         layout.addWidget(self.muonic_widgets['start_params'], 9, 1, 2, 4)
         layout.addWidget(self.muonic_widgets['open_files'], 11, 1, 2, 4)
 
-        self.refresh_button = QtGui.QPushButton("Refresh")
+        self.refresh_button = QtWidgets.QPushButton("Refresh")
         self.refresh_button.setDisabled(False)
-        QtCore.QObject.connect(self.refresh_button,
-                               QtCore.SIGNAL("clicked()"),
-                               self.on_refresh_clicked)
+        self.refresh_button.clicked.connect(self.on_refresh_clicked)
 
         layout.addWidget(self.refresh_button, 13, 0, 1, 6)
 
@@ -874,7 +869,7 @@ class StatusWidget(BaseWidget):
 
         :returns: None
         """
-        self.refresh_button.setDisabled(True)        
+        self.refresh_button.setDisabled(True)
         self.logger.debug("Refreshing status information.")
 
         # request status information from DAQ card
@@ -1026,42 +1021,37 @@ class VelocityWidget(BaseWidget):
 
         # we want the plot canvas to fill as much space as possible
         self.plot_canvas.setSizePolicy(
-                QtGui.QSizePolicy.Expanding,
-                QtGui.QSizePolicy.Expanding)
+                QtWidgets.QSizePolicy.Expanding,
+                QtWidgets.QSizePolicy.Expanding)
 
         # velocity trigger
         self.trigger = VelocityTrigger(logger)
 
         # checkbox and buttons
-        self.checkbox = QtGui.QCheckBox(self)
+        self.checkbox = QtWidgets.QCheckBox(self)
         self.checkbox.setText("Measure Flight Time")
 
-        self.fit_button = QtGui.QPushButton('Fit!')
+        self.fit_button = QtWidgets.QPushButton('Fit!')
         # self.fit_button.setEnabled(False)
         self.fit_button.setEnabled(True)
 
-        self.fit_range_button = QtGui.QPushButton('Fit Range')
+        self.fit_range_button = QtWidgets.QPushButton('Fit Range')
         # self.fit_range_button.setEnabled(False)
         self.fit_range_button.setEnabled(True)
 
-        QtCore.QObject.connect(self.checkbox,
-                               QtCore.SIGNAL("clicked()"),
-                               self.on_checkbox_clicked)
-        QtCore.QObject.connect(self.fit_button, QtCore.SIGNAL("clicked()"),
-                               self.on_fit_clicked)
-        QtCore.QObject.connect(self.fit_range_button,
-                               QtCore.SIGNAL("clicked()"),
-                               self.on_fit_range_clicked)
+        self.checkbox.clicked.connect(self.on_checkbox_clicked)
+        self.fit_button.clicked.connect(self.on_fit_clicked)
+        self.fit_range_button.clicked.connect(self.on_fit_range_clicked)
 
         self.running_status = None
         # self.muon_counter_label = QtGui.QLabel(self)
         # self.last_event_label = QtGui.QLabel(self)
-        self.active_since_label = QtGui.QLabel(self)
+        self.active_since_label = QtWidgets.QLabel(self)
 
         navigation_toolbar = NavigationToolbar(self.plot_canvas, self)
 
         # add widgets to layout
-        layout = QtGui.QGridLayout(self)
+        layout = QtWidgets.QGridLayout(self)
         layout.addWidget(self.checkbox, 0, 0, 1, 3)
         # layout.addWidget(self.muon_counter_label, 1, 0)
         # layout.addWidget(self.last_event_label, 2, 0)
@@ -1191,7 +1181,7 @@ class VelocityWidget(BaseWidget):
             if self.parent.is_widget_active("decay"):
                 self.parent.get_widget("decay").stop()
 
-            self.running_status = QtGui.QLabel("Muon velocity " +
+            self.running_status = QtWidgets.QLabel("Muon velocity " +
                                                "measurement active!")
             self.parent.status_bar.addPermanentWidget(self.running_status)
 
@@ -1343,42 +1333,37 @@ class DecayWidget(BaseWidget):
 
         # we want the plot canvas to fill as much space as possible
         self.plot_canvas.setSizePolicy(
-                QtGui.QSizePolicy.Expanding,
-                QtGui.QSizePolicy.Expanding)
+                QtWidgets.QSizePolicy.Expanding,
+                QtWidgets.QSizePolicy.Expanding)
 
         # decay trigger
         self.trigger = DecayTriggerThorough(logger)
 
         # checkbox and buttons
-        self.checkbox = QtGui.QCheckBox(self)
+        self.checkbox = QtWidgets.QCheckBox(self)
         self.checkbox.setText("Check for Decayed Muons")
 
-        self.fit_button = QtGui.QPushButton("Fit!")
+        self.fit_button = QtWidgets.QPushButton("Fit!")
         # self.fit_button.setEnabled(False)
         self.fit_button.setEnabled(True)
 
-        self.fit_range_button = QtGui.QPushButton("Fit Range")
+        self.fit_range_button = QtWidgets.QPushButton("Fit Range")
         # self.fit_range_button.setEnabled(False)
         self.fit_range_button.setEnabled(True)
 
-        QtCore.QObject.connect(self.checkbox,
-                               QtCore.SIGNAL("clicked()"),
-                               self.on_checkbox_clicked)
-        QtCore.QObject.connect(self.fit_button, QtCore.SIGNAL("clicked()"),
-                               self.on_fit_clicked)
-        QtCore.QObject.connect(self.fit_range_button,
-                               QtCore.SIGNAL("clicked()"),
-                               self.on_fit_range_clicked)
+        self.checkbox.clicked.connect(self.on_checkbox_clicked)
+        self.fit_button.clicked.connect(self.on_fit_clicked)
+        self.fit_range_button.clicked.connect(self.on_fit_range_clicked)
 
         self.running_status = None
         # self.muon_counter_label = QtGui.QLabel(self)
         # self.last_event_label = QtGui.QLabel(self)
-        self.active_since_label = QtGui.QLabel(self)
+        self.active_since_label = QtWidgets.QLabel(self)
 
         navigation_toolbar = NavigationToolbar(self.plot_canvas, self)
 
         # add widgets to layout
-        layout = QtGui.QGridLayout(self)
+        layout = QtWidgets.QGridLayout(self)
         layout.addWidget(self.checkbox, 0, 0, 1, 3)
         # layout.addWidget(self.muon_counter_label, 1, 0)
         # layout.addWidget(self.last_event_label, 2, 0)
@@ -1559,7 +1544,7 @@ class DecayWidget(BaseWidget):
             self.logger.info("Using veto pulses in Channel %i" %
                              (self.veto_pulse_channel - 1))
 
-            self.running_status = QtGui.QLabel("Muon Decay " +
+            self.running_status = QtWidgets.QLabel("Muon Decay " +
                                                "measurement active!")
             self.parent.status_bar.addPermanentWidget(self.running_status)
 
@@ -1696,27 +1681,25 @@ class DAQWidget(BaseWidget):
         self.start_time = datetime.datetime.utcnow()
 
         # daq msg log
-        self.daq_msg_log = QtGui.QPlainTextEdit()
+        self.daq_msg_log = QtWidgets.QPlainTextEdit()
         self.daq_msg_log.setReadOnly(True)
         self.daq_msg_log.setFont(QtGui.QFont("monospace"))
         # 500 lines history
         self.daq_msg_log.document().setMaximumBlockCount(500)
 
         # input field and buttons
-        self.label = QtGui.QLabel("Command")
+        self.label = QtWidgets.QLabel("Command")
         self.hello_edit = HistoryAwareLineEdit()
         # self.file_button = QtGui.QPushButton("Save DAQ-File")
 
         # connect signals
-        QtCore.QObject.connect(self.hello_edit,
-                               QtCore.SIGNAL("returnPressed()"),
-                               self.on_hello_clicked)
+        self.hello_edit.returnPressed.connect(self.on_hello_clicked)
         # QtCore.QObject.connect(self.file_button,
         #                        QtCore.SIGNAL("clicked()"),
         #                        self.on_file_clicked)
 
         # add widgets to layout
-        layout = QtGui.QGridLayout(self)
+        layout = QtWidgets.QGridLayout(self)
         layout.addWidget(self.daq_msg_log, 0, 0, 1, 3)
         layout.addWidget(self.label, 1, 0)
         layout.addWidget(self.hello_edit, 1, 1)
@@ -1844,45 +1827,44 @@ class GPSWidget(BaseWidget):
 
         self.gps_dump = []
 
-        self.refresh_button = QtGui.QPushButton("Show GPS")
-        QtCore.QObject.connect(self.refresh_button, QtCore.SIGNAL("clicked()"),
-                               self.on_refresh_clicked)
+        self.refresh_button = QtWidgets.QPushButton("Show GPS")
+        self.refresh_button.clicked.connect(self.on_refresh_clicked)
 
-        self.gps_status_log = QtGui.QPlainTextEdit()
+        self.gps_status_log = QtWidgets.QPlainTextEdit()
         self.gps_status_log.setReadOnly(True)
         self.gps_status_log.setFont(QtGui.QFont("monospace"))
         # only 500 lines history
         self.gps_status_log.document().setMaximumBlockCount(500)
 
-        self.status_box = QtGui.QLabel("Not read out")
-        self.gps_time_box = QtGui.QLabel("--")
-        self.satellites_box = QtGui.QLabel("--")
-        self.checksum_box = QtGui.QLabel("--")
-        self.latitude_box = QtGui.QLabel("--")
-        self.longitude_box = QtGui.QLabel("--")
-        self.altitude_box = QtGui.QLabel("--")
-        self.pos_fix_box = QtGui.QLabel("--")
+        self.status_box = QtWidgets.QLabel("Not read out")
+        self.gps_time_box = QtWidgets.QLabel("--")
+        self.satellites_box = QtWidgets.QLabel("--")
+        self.checksum_box = QtWidgets.QLabel("--")
+        self.latitude_box = QtWidgets.QLabel("--")
+        self.longitude_box = QtWidgets.QLabel("--")
+        self.altitude_box = QtWidgets.QLabel("--")
+        self.pos_fix_box = QtWidgets.QLabel("--")
 
         self.msg_offset = 0
 
         # add widgets to layout
-        layout = QtGui.QGridLayout(self)
-        layout.addWidget(QtGui.QLabel("GPS Display:"), 0, 0, 1, 4)
-        layout.addWidget(QtGui.QLabel("Status: "), 1, 0)
+        layout = QtWidgets.QGridLayout(self)
+        layout.addWidget(QtWidgets.QLabel("GPS Display:"), 0, 0, 1, 4)
+        layout.addWidget(QtWidgets.QLabel("Status: "), 1, 0)
         layout.addWidget(self.status_box, 1, 1)
-        layout.addWidget(QtGui.QLabel("GPS time: "), 2, 0)
+        layout.addWidget(QtWidgets.QLabel("GPS time: "), 2, 0)
         layout.addWidget(self.gps_time_box, 2, 1)
-        layout.addWidget(QtGui.QLabel("#Satellites: "), 3, 0)
+        layout.addWidget(QtWidgets.QLabel("#Satellites: "), 3, 0)
         layout.addWidget(self.satellites_box, 3, 1)
-        layout.addWidget(QtGui.QLabel("Checksum: "), 4, 0)
+        layout.addWidget(QtWidgets.QLabel("Checksum: "), 4, 0)
         layout.addWidget(self.checksum_box, 4, 1)
-        layout.addWidget(QtGui.QLabel("Latitude: "), 1, 2)
+        layout.addWidget(QtWidgets.QLabel("Latitude: "), 1, 2)
         layout.addWidget(self.latitude_box, 1, 3)
-        layout.addWidget(QtGui.QLabel("Longitude: "), 2, 2)
+        layout.addWidget(QtWidgets.QLabel("Longitude: "), 2, 2)
         layout.addWidget(self.longitude_box, 2, 3)
-        layout.addWidget(QtGui.QLabel("Altitude: "), 3, 2)
+        layout.addWidget(QtWidgets.QLabel("Altitude: "), 3, 2)
         layout.addWidget(self.altitude_box, 3, 3)
-        layout.addWidget(QtGui.QLabel("PosFix: "), 4, 2)
+        layout.addWidget(QtWidgets.QLabel("PosFix: "), 4, 2)
         layout.addWidget(self.pos_fix_box, 4, 3)
         layout.addWidget(self.gps_status_log, 6, 0, 1, 4)
         layout.addWidget(self.refresh_button, 7, 0, 1, 4)
@@ -1894,7 +1876,7 @@ class GPSWidget(BaseWidget):
         :returns: None
         """
         self.refresh_button.setEnabled(False)
-        self.gps_dump = [] 
+        self.gps_dump = []
         self.logger.info('Reading GPS.')
         self.parent.process_incoming()
         self.active(True)
@@ -1932,7 +1914,7 @@ class GPSWidget(BaseWidget):
         # sometimes, the widget will not register the line where the DG command is put
         if not self.gps_dump[1].startswith('DG'):
             self.msg_offset = -1
-	
+
         gps_time = ''
         pos_fix = 0
         latitude = ''

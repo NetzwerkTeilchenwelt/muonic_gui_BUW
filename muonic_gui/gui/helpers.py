@@ -3,22 +3,25 @@ Provides helper classes and function needed by the gui
 """
 from matplotlib.pylab import rc
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 
-class HistoryAwareLineEdit(QtGui.QLineEdit):
+class HistoryAwareLineEdit(QtWidgets.QLineEdit):
     """
     A LineEdit widget that is aware of its input history. The history can be
     cycled by pressing arrow up and arrow down.
 
     :param args: widget args
     """
+    keyDownPressed = QtCore.pyqtSignal()
+    keyUpPressed = QtCore.pyqtSignal()
+
     def __init__(self, *args):
-        QtGui.QLineEdit.__init__(self, *args)
+        QtWidgets.QLineEdit.__init__(self, *args)
         self.history = []
         self.hist_pointer = 0
-        
+
     def event(self, event):
         """
         Handles keypress events.
@@ -28,7 +31,7 @@ class HistoryAwareLineEdit(QtGui.QLineEdit):
         """
         if event.type() == QtCore.QEvent.KeyPress:
             if event.key() == QtCore.Qt.Key_Down:
-                self.emit(QtCore.SIGNAL("keyDownPressed"))
+                self.keyDownPressed.emit()
                 if self.hist_pointer < len(self.history) - 1:
                     self.hist_pointer += 1
                     self.setText(self.history[self.hist_pointer])
@@ -37,14 +40,14 @@ class HistoryAwareLineEdit(QtGui.QLineEdit):
                     self.hist_pointer += 1
                 return True
             if event.key() == QtCore.Qt.Key_Up:
-                self.emit(QtCore.SIGNAL("keyUpPressed"))
+                self.keyUpPressed.emit()
                 if self.hist_pointer > 0:
                     self.hist_pointer -= 1
                     self.setText(self.history[self.hist_pointer])
                 return True
             else:
-                return QtGui.QLineEdit.event(self, event)
-        return QtGui.QLineEdit.event(self, event)
+                return QtWidgets.QLineEdit.event(self, event)
+        return QtWidgets.QLineEdit.event(self, event)
 
     def add_hist_item(self, item):
         """
@@ -65,12 +68,12 @@ def set_large_plot_style():
     :returns: None
     """
     font_size = 20
-    
+
     # workaround for ancient versions of matplotlib at DESY
     from matplotlib import __version__ as mplversion
     from distutils.version import LooseVersion
     if LooseVersion(mplversion) > LooseVersion("1.3.0"):
-        ff = "TeX Gyre Pagella" 
+        ff = "TeX Gyre Pagella"
     else:
         ff = 'serif'
 

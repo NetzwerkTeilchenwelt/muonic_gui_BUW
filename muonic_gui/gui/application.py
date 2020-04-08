@@ -3,14 +3,15 @@
 Provides the main window for the gui part of muonic
 """
 from os import path
+from PyQt5.QtWidgets import *
 import datetime
 import threading
 import time
 import uuid
 import webbrowser
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 from muonic import __version__, __source_location__
 from muonic import __docs_hosted_at__, __manual_hosted_at__
@@ -30,7 +31,7 @@ from muonic_gui.gui.widgets import GPSWidget, StatusWidget
 # from muonic.util import get_data_directory
 
 
-class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
+class Application(AbstractMuonicConsumer, QtWidgets.QMainWindow):
     """
     The GUI main application
 
@@ -44,7 +45,7 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
         # call parent class init functions
         # App.__init__(self, opts, analyzers, logger)
         AbstractMuonicConsumer.__init__(self, logger=logger)
-        QtGui.QMainWindow.__init__(self)
+        QtWidgets.QMainWindow.__init__(self)
 
         # start time of the application
         self.start_time = datetime.datetime.utcnow()
@@ -58,13 +59,13 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
         self.opts = opts
 
         # tab widget to hold the different physics widgets
-        self.tab_widget = QtGui.QTabWidget(self)
+        self.tab_widget = QtWidgets.QTabWidget(self)
 
         # widget store for the tab widgets to reference later
         self._widgets = dict()
 
         # setup status bar
-        self.status_bar = QtGui.QMainWindow.statusBar(self)
+        self.status_bar = QtWidgets.QMainWindow.statusBar(self)
 
         # detected pulses
         self.pulses = None
@@ -104,9 +105,7 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
         self.daq_log = ""
 
         self.daq_log_timer = QtCore.QTimer()
-        QtCore.QObject.connect(self.daq_log_timer,
-                               QtCore.SIGNAL("timeout()"),
-                               self.update_raw_daq)
+        self.daq_log_timer.timeout.connect(self.update_raw_daq)
 
         self.daq_log_timer.start(1500)
 
@@ -168,7 +167,7 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
 
         :returns: None
         """
-        desktop = QtGui.QDesktopWidget()
+        desktop = QtWidgets.QDesktopWidget()
         screen_size = QtCore.QRectF(desktop.screenGeometry(
                 desktop.primaryScreen()))
         screen_x = screen_size.x() + screen_size.width()
@@ -193,40 +192,35 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
         # create file menu
         file_menu = menu_bar.addMenu('&File')
 
-        muonic_data_action = QtGui.QAction('Open Data Folder', self)
+        muonic_data_action = QtWidgets.QAction('Open Data Folder', self)
         muonic_data_action.setStatusTip('Open the folder with the data files written by muonic.')
         muonic_data_action.setShortcut('Ctrl+O')
-        self.connect(muonic_data_action, QtCore.SIGNAL('triggered()'),
-                     self.open_muonic_data)
+        muonic_data_action.triggered.connect(self.open_muonic_data)
 
         file_menu.addAction(muonic_data_action)
 
-        exit_action = QtGui.QAction(QtGui.QIcon(
+        exit_action = QtWidgets.QAction(QtGui.QIcon(
                 "/usr/share/icons/gnome/24x24/actions/exit.png"), 'Exit', self)
         exit_action.setShortcut('Ctrl+Q')
         exit_action.setStatusTip('Exit application')
-        self.connect(exit_action, QtCore.SIGNAL('triggered()'),
-                     QtCore.SLOT('close()'))
+        exit_action.triggered.connect(self.close_application)
 
         file_menu.addAction(exit_action)
 
         # create settings menu
         settings_menu = menu_bar.addMenu('&Settings')
 
-        config_action = QtGui.QAction('Channel Configuration', self)
+        config_action = QtWidgets.QAction('Channel Configuration', self)
         config_action.setStatusTip('Configure the Coincidences and channels')
-        self.connect(config_action, QtCore.SIGNAL('triggered()'),
-                     self.config_menu)
+        config_action.triggered.connect(self.config_menu)
 
-        thresholds_action = QtGui.QAction('Thresholds', self)
+        thresholds_action = QtWidgets.QAction('Thresholds', self)
         thresholds_action.setStatusTip('Set trigger thresholds')
-        self.connect(thresholds_action, QtCore.SIGNAL('triggered()'),
-                     self.threshold_menu)
+        thresholds_action.triggered.connect(self.threshold_menu)
 
-        advanced_action = QtGui.QAction('Advanced Configurations', self)
+        advanced_action = QtWidgets.QAction('Advanced Configurations', self)
         advanced_action.setStatusTip('Advanced configurations')
-        self.connect(advanced_action, QtCore.SIGNAL('triggered()'),
-                     self.advanced_menu)
+        advanced_action.triggered.connect(self.advanced_menu)
 
         settings_menu.addAction(config_action)
         settings_menu.addAction(thresholds_action)
@@ -235,22 +229,18 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
         # create help menu
         help_menu = menu_bar.addMenu('&Help')
 
-        manualdoc_action = QtGui.QAction('Website with Manual', self)
-        self.connect(manualdoc_action, QtCore.SIGNAL('triggered()'),
-                     self.manualdoc_menu)
+        manualdoc_action = QtWidgets.QAction('Website with Manual', self)
+        manualdoc_action.triggered.connect(self.manualdoc_menu)
 
-        sphinxdoc_action = QtGui.QAction('Technical documentation', self)
-        self.connect(sphinxdoc_action, QtCore.SIGNAL('triggered()'),
-                     self.sphinxdoc_menu)
+        sphinxdoc_action = QtWidgets.QAction('Technical documentation', self)
+        sphinxdoc_action.triggered.connect(self.sphinxdoc_menu)
 
-        commands_action = QtGui.QAction('DAQ Commands', self)
+        commands_action = QtWidgets.QAction('DAQ Commands', self)
         commands_action.setShortcut('F1')
-        self.connect(commands_action, QtCore.SIGNAL('triggered()'),
-                     self.help_menu)
+        commands_action.triggered.connect(self.help_menu)
 
-        about_action = QtGui.QAction('About muonic', self)
-        self.connect(about_action, QtCore.SIGNAL('triggered()'),
-                     self.about_menu)
+        about_action = QtWidgets.QAction('About muonic', self)
+        about_action.triggered.connect(self.about_menu)
 
         help_menu.addAction(manualdoc_action)
         help_menu.addAction(commands_action)
@@ -278,11 +268,11 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
         if widget is None:
             return
         if self.have_widget(name):
-            raise WidgetWithNameExistsError(
-                    "widget with name '%s' already exists" % name)
+            raise WidgetWithNameExistsError("widget with name '%s' already exists" % name)
         else:
-            if not isinstance(widget, QtGui.QWidget):
+            if not isinstance(widget, QtWidgets.QWidget):
                 raise TypeError("widget has to be a subclass 'QtGui.QWidget'")
+                lastWindowClosed = QtCore.pyqtSignal()
             else:
                 self.tab_widget.addTab(widget, label)
                 self._widgets[name] = widget
@@ -354,7 +344,7 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
                                  (cmd.split()[1], cmd.split()[2]))
 
         self._app.daq.put('TL')
-  
+
     def open_muonic_data(self):
         """
         Opens the folder with the data files. Usually in $HOME/muonic_data
@@ -435,12 +425,12 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
 
             if not coincidence_set:
                 tmp_msg += "00"
-    
+
             # now calculate the correct expression for the first
             # four bits
             self.logger.debug("The first four bits are set to %s" % tmp_msg)
             msg = "WC 00 %s" % hex(int(''.join(tmp_msg), 2))[-1].capitalize()
-    
+
             channel_set = False
             enable = ['0', '0', '0', '0']
 
@@ -448,7 +438,7 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
                 if active:
                     enable[i] = '1'
                     channel_set = True
-            
+
             if channel_set:
                 msg += hex(int(''.join(enable), 2))[-1].capitalize()
             else:
@@ -469,7 +459,7 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
                                   (name, coincidence_config[i]))
 
         self._app.daq.put("DC")
-           
+
     def advanced_menu(self):
         """
         Show a config dialog for advanced options, ie. gate width,
@@ -536,14 +526,14 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
         :returns: None
         """
         HelpDialog().exec_()
-        
+
     def about_menu(self):
         """
         Show a link to the online documentation.
 
         :returns: None
         """
-        QtGui.QMessageBox.information(self, "about muonic",
+        QtWidgets.QMessageBox.information(self, "about muonic",
                                       "version: %s\n source located at: %s" %
                                       (__version__, __source_location__))
 
@@ -608,12 +598,12 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
         self.logger.info("Attempting to close application")
 
         # ask kindly if the user is really sure if she/he wants to exit
-        reply = QtGui.QMessageBox.question(self, "Attention!",
+        reply = QtWidgets.QMessageBox.question(self, "Attention!",
                                            "Do you really want to exit?",
-                                           QtGui.QMessageBox.Yes |
-                                           QtGui.QMessageBox.No)
+                                           QtWidgets.QMessageBox.Yes |
+                                           QtWidgets.QMessageBox.No)
 
-        if reply == QtGui.QMessageBox.Yes:
+        if reply == QtWidgets.QMessageBox.Yes:
             # self.timer.stop()
             # self.widget_updater.stop()
 
@@ -631,7 +621,7 @@ class Application(AbstractMuonicConsumer, QtGui.QMainWindow):
 
             time.sleep(0.5)
 
-            self.emit(QtCore.SIGNAL('lastWindowClosed()'))
+            self.lastWindowClosed.emit()
             ev.accept()
         else:
             # don't close the application
